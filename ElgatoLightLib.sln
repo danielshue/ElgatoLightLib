@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.128
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElgatoLightLib", "ElgatoLightLib\ElgatoLightLib.csproj", "{80988A58-44D0-4DAD-934A-996858579E0E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElgatoLightLib.Tests", "ElgatoLightLib.Tests\ElgatoLightLib.Tests.csproj", "{FE26FF93-CB9F-4F59-9528-89AEFE0EC514}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80988A58-44D0-4DAD-934A-996858579E0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80988A58-44D0-4DAD-934A-996858579E0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80988A58-44D0-4DAD-934A-996858579E0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80988A58-44D0-4DAD-934A-996858579E0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE26FF93-CB9F-4F59-9528-89AEFE0EC514}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE26FF93-CB9F-4F59-9528-89AEFE0EC514}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE26FF93-CB9F-4F59-9528-89AEFE0EC514}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE26FF93-CB9F-4F59-9528-89AEFE0EC514}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E8275CDF-B2EF-44FC-BCCF-791940750243}
+	EndGlobalSection
+EndGlobal
