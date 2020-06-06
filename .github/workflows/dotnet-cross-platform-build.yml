@@ -10,7 +10,7 @@ env:
   SOLUTION: 'ElgatoLightLib.sln'
   DOTNET_VERSION: '2.2.402'       # set this to the dotnet version to use
   WORKING-DIR: './ElgatoLightLib/'
-  OUTPUT-DIR: './ElgatoLightLib/output/'
+  OUTPUT-DIR:  './ElgatoLightLib/output/'
 
 jobs:
   build:
@@ -29,10 +29,10 @@ jobs:
 
       - name: Build on ${{ matrix.os }}
         working-directory: $WORKING-DIR
-        run: dotnet build $SOLUTION --output $OUTPUT-DIR --configuration Release  
+        run: dotnet build $SOLUTION --output './ElgatoLightLib/output/' --configuration Release  
 
       - name: Archive files on ${{ matrix.os }}
         uses: actions/upload-artifact@v1
         with: 
           name: dist-${{ matrix.os }}
-          path: $OUTPUT-DIR
+          path: './ElgatoLightLib/output/'
