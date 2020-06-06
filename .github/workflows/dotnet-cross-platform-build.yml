@@ -22,14 +22,14 @@ jobs:
       - uses: actions/checkout@v2        
 
       - name: If Unix, Setup .NET Core for ${{ matrix.os }}
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v1.5.0
         with:
           dotnet-version: 3.1.101    
         if: matrix.os == 'macOS-latest' || matrix.os == 'ubuntu-latest'        
 
       - name: Build on ${{ matrix.os }}
         working-directory: $WORKING-DIR
-        run: dotnet build $solution --output ./publish_output --configuration Release  
+        run: dotnet build ./ElgatoLightLib --output ./publish_output --configuration Release  
 
       - name: Archive files on ${{ matrix.os }}
         uses: actions/upload-artifact@v1
