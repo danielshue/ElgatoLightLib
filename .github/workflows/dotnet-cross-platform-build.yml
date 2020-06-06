@@ -29,10 +29,10 @@ jobs:
 
       - name: Build on ${{ matrix.os }}
         working-directory: $WORKING-DIR
-        run: dotnet build --output './output/' --configuration Release  
+        run: dotnet build ElgatoLightLib.sln --output ./output --configuration Release  
 
       - name: Archive files on ${{ matrix.os }}
         uses: actions/upload-artifact@v1
         with: 
           name: dist-${{ matrix.os }}
-          path: './output/'
+          path: './ElgatoLightLib/output'
