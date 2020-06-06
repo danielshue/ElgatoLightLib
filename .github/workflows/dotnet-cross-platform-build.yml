@@ -29,7 +29,7 @@ jobs:
 
       - name: Build on ${{ matrix.os }}
         working-directory: $WORKING-DIR
-        run: dotnet build $SOLUTION -output $OUTPUT-DIR --configuration Release  
+        run: dotnet build $SOLUTION --output $OUTPUT-DIR --configuration Release  
 
       - name: Archive files on ${{ matrix.os }}
         uses: actions/upload-artifact@v1
