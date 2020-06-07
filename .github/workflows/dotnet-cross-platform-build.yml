@@ -1,0 +1,30 @@
+name: .NET Core
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+jobs:
+  build:
+      runs-on: ${{ matrix.os }}    
+      strategy:
+        matrix:
+          os: [macOS-latest, ubuntu-latest, windows-latest]
+      steps:                      
+      - uses: actions/checkout@v2        
+      - name: If Unix, Setup .NET Core for ${{ matrix.os }}
+        uses: actions/setup-dotnet@v1.5.0
+        with:
+          dotnet-version: 5.0.x
+        if: matrix.os == 'macOS-latest' || matrix.os == 'ubuntu-latest'        
+
+      - name: Build on ${{ matrix.os }}
+        run: dotnet build ./ElgatoLightLib.sln --output ./publish_output --configuration Release  
+
+      - name: Archive files on ${{ matrix.os }}
+        uses: actions/upload-artifact@v1
+        with: 
+          name: dist-${{ matrix.os }}
+          path: './publish_output'
