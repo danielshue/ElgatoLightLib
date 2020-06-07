@@ -17,7 +17,7 @@ jobs:
       - name: If Unix, Setup .NET Core for ${{ matrix.os }}
         uses: actions/setup-dotnet@v1.5.0
         with:
-          dotnet-version: 5.0.x
+          dotnet-version: 3.1.x
         if: matrix.os == 'macOS-latest' || matrix.os == 'ubuntu-latest'        
 
       - name: Build on ${{ matrix.os }}
