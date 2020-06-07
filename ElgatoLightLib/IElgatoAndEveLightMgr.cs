@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace eelightlib
+namespace ElgatoLightLib
 {
     /// <summary>
     /// Interface for manging the Elgato Key Light and Eve Light

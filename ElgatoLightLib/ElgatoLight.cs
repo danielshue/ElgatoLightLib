@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -7,13 +8,37 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace eelightlib
+namespace ElgatoLightLib
 {
     /// <summary>
     /// Class Library for the Elgato Light
     /// </summary>
     public class ElgatoLight
     {
+        private const string StatusInfoEndPointTemplate = @"http://{0}:{1}/elgato/lights";
+        private const string SettingsEndPointTemplate = @"http://{0}:{1}/elgato/lights/settings";
+
+        public const int MinimumTemperature = 143;
+        public const int MaximumTemperature = 344;
+        public const int DefaultTemperature = 213;
+
+        public const int MinKelvin = 2900;
+        public const int MaxKelvin = 7000;
+        public const int WhiteRangeKelvin = 4100;
+
+        public const int MinimumBrightness = 3;
+        public const int MaximumBrightness = 100;
+        public const int HalfBrightness = 50;
+
+        public const bool DefaultOn = true;
+        public const double DefaultHue = 31.0;
+        public const double DefaultSaturation = 33.0;
+        public const int DefaultBrightness = 20;
+        public const int DefaultDurationSwitchOnMs = 100;
+        public const int DefaultDurationSwitchOffMs = 300;
+        public const int DefaultsDurationColorChangeMs = 100;
+        public const int DefaultDefaultPWMHz = 300;
+
         /// <exclude />
         [JsonPropertyName("productName")]
         public string ProductName { get; set; }
@@ -53,7 +78,7 @@ namespace eelightlib
 
         /// <exclude />
         [JsonPropertyName("on")]
-        public bool On { get; set; }
+        public int On { get; set; }
 
         /// <exclude />
         [JsonPropertyName("brightness")]
@@ -62,6 +87,20 @@ namespace eelightlib
         /// <exclude />
         [JsonPropertyName("temperature")]
         public int Temperature { get; set; }
+
+        public ElgatoLightSettings Settings { get; set; }
+
+        /// <summary>
+        /// Enum value of Elgato Lights
+        /// </summary>
+        /// <seealso cref="HardwareBoardType"/>
+        public ElgatoLightType LightType
+        {
+            get
+            {
+                return (ElgatoLightType)HardwareBoardType;
+            }
+        }
 
         /// <exclude />
         public string EndPoint
@@ -72,105 +111,124 @@ namespace eelightlib
             }
         }
 
+        public bool IsOn
+        {
+            get
+            {
+                if (On == 1)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public async Task OnAsync()
         {
-            var json = "{ \"numberOfLights\":1,\"lights\":[{ \"on\":1}]}";
+            await UpdateStatusAsync();
 
-            var ret = await HttpPut(json);
+            Debug.WriteLine($"OnAsync Old Values: {ToString()}");
 
-            ParseReturn(ret);
+            var targetStatus = LightsStatus.FromLight(this);
 
-            Debug.WriteLine($"OnAsync Values:\n{ToInfo()}");
+            targetStatus.Lights[0].On = 1;
 
-            if (On == false)
+            var targetStatusJson = targetStatus.ToJson();
+
+            var returnedJsonStatus = await UpdateDevice(targetStatusJson);
+
+            if (string.IsNullOrWhiteSpace(returnedJsonStatus))
             {
-                throw new LightNotOnException("Failed to turn light On.");
+                Debug.WriteLine($"The network is either offline or the device returned null data.");
+                return;
             }
+
+            await ParseLightStatus(returnedJsonStatus);
+
+            await UpdateSettings();
+
+            Debug.WriteLine($"OnAsync New Values: {ToString()}");
         }
 
         public async Task OffAsync()
         {
-            var json = "{ \"numberOfLights\":1,\"lights\":[{ \"on\":0}]}";
+            await UpdateStatusAsync();
 
-            var ret = await HttpPut(json);
+            Debug.WriteLine($"OffAsync Old Values: {ToString()}");
 
-            ParseReturn(ret);
+            // extract the current settings 
+            var targetSettings = LightsStatus.FromLight(this);
 
-            Debug.WriteLine($"OffAsync Values:\n{ToInfo()}");
+            targetSettings.Lights[0].On = 0;
 
-            if (On)
+            // convert the current status to json
+            var targetStatusJson = targetSettings.ToJson();
+
+            var returnedJsonStatus = await UpdateDevice(targetStatusJson);
+
+            if (string.IsNullOrWhiteSpace(returnedJsonStatus))
             {
-                throw new LightNotOnException("Failed to turn light Off.");
+                Debug.WriteLine($"The network is either offline or the device returned null data.");
+                return;
             }
+
+            await ParseLightStatus(returnedJsonStatus);
+
+            await UpdateSettings();
+
+            Debug.WriteLine($"OffAsync New Values: {ToString()}");
         }
 
-        /// <summary>
-        /// Sets the light to a specific brightness level of 0-100.
-        /// </summary>
-        /// <param name="level">The level amount to set the brightness.</param>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown if the new value is out of range. The minimum total range 0 and maximum of 100.</exception>
-        public async Task SetBrightnessAsync(int level)
-        {
-            if (On == false)
-            {
-                throw new LightNotOnException("The light must be turned On in order to turn the set the brightness.");
-            }
-
-            if (level < 0)
-            {
-                throw new ArgumentOutOfRangeException($"The requested level of {level} would exceed the minimum range of 0.");
-            }
-
-            if (level > 100)
-            {
-                throw new ArgumentOutOfRangeException($"The requested level of {level} would exceed the maxmium range of 100.");
-            }
-
-            var json = $"{{ \"numberOfLights\": 1,\"lights\": [{{\"brightness\":{level} }}]}}";
-
-            var ret = await HttpPut(json);
-
-            ParseReturn(ret);
-        }
 
         public async Task IncreaseBrightnessAsync(int amount)
         {
-            if (On == false)
-            {
-                throw new LightNotOnException("The light must be turned On in order to turn the increase the brightness.");
-            }
-
-            if (Brightness + amount < 0)
-            {
-                throw new ArgumentOutOfRangeException($"Brightness currently set at {Brightness}. The requested amount {amount} would exceed the minimum range of 0.");
-            }
-
-            if (Brightness + amount > 100)
-            {
-                throw new ArgumentOutOfRangeException($"Brightness currently set at {Brightness}. The requested amount of {amount} would exceed the maxmium range of 100.");
-            }
-
             await SetBrightnessAsync(Brightness + amount);
         }
 
         public async Task DecreaseBrightnessAsync(int amount)
         {
-            if (On == false)
-            {
-                throw new LightNotOnException("The light must be turned On in order to turn the decrease the brightness.");
-            }
-
-            if (Brightness - amount < 0)
-            {
-                throw new ArgumentOutOfRangeException($"Brightness currently set at {Brightness}. The requested amount of {amount} would exceed the minimum range of 0.");
-            }
-
-            if (Brightness - amount > 100)
-            {
-                throw new ArgumentOutOfRangeException($"Brightness currently set at {Brightness}. The requested amount of {amount} would exceed the maxmium range of 100.");
-            }
-
             await SetBrightnessAsync(Brightness - amount);
+        }
+
+        /// <summary>
+        /// Sets the light to a specific brightness level of <see cref="MinimumBrightness"/> and <see cref="MaximumBrightness"/>.
+        /// </summary>
+        /// <param name="level">The level amount to set the brightness.</param>
+        /// <exception cref="ElgatoLightNotOnException">Thrown if trying to set the brightness and the device isn't turned on.</exception>
+        /// <exception cref="ElgatoLightOutOfRangeException">Thrown if the new value is out of range. The minimum range is <see cref="MinimumBrightness"/> and maximum brightness is <see cref="MaximumBrightness"/>.</exception>
+        public async Task SetBrightnessAsync(int level)
+        {
+            if (IsOn == false)
+            {
+                throw new ElgatoLightNotOnException("The light must be turned On in order to turn the set the brightness.");
+            }
+
+            await UpdateStatusAsync();
+
+            Debug.WriteLine($"SetBrightnessAsync Old Values: {ToString()}");
+
+            if (level < MinimumBrightness || level > MaximumBrightness)
+            {
+                throw new ElgatoLightOutOfRangeException($"Brightness Out of Range {level}. The minimum range is {MinimumBrightness} and the Maximum is {MaximumBrightness}.");
+            }
+
+            var targetStatus = LightsStatus.FromLight(this);
+
+            targetStatus.Lights[0].Brightness = level;
+
+            var targetStatusJson = targetStatus.ToJson();
+
+            var retreturnedJsonStatus = await UpdateDevice(targetStatusJson);
+
+            if (string.IsNullOrWhiteSpace(retreturnedJsonStatus))
+            {
+                Debug.WriteLine($"The network is either offline or the device returned null data.");
+                return;
+            }
+
+            await ParseLightStatus(retreturnedJsonStatus);
+
+            Debug.WriteLine($"SetBrightnessAsync New Values: {ToString()}");
         }
 
         /// <summary>
@@ -178,81 +236,149 @@ namespace eelightlib
         /// </summary>
         /// <param name="temp"></param>
         /// <returns></returns>
+        /// <exception cref="ElgatoLightNotOnException">Thrown if trying to set the brightness and the device isn't turned on.</exception>
+        /// <exception cref="ElgatoLightOutOfRangeException">Thrown if the new value is out of range. The minimum range is <see cref="MinimumTemperature"/> and maximum tempature is <see cref="MaximumTemperature"/>.</exception>
         public async Task SetColorTemperatureAsync(int temp)
         {
-            var json = $"{{ \"numberOfLights\": 1,\"lights\": [{{\"temperature\":{  temp } }}]}}";
+            if (IsOn == false)
+            {
+                throw new ElgatoLightNotOnException("The light must be turned On in order to turn the set the tempature.");
+            }
 
-            var ret = await HttpPut(json);
+            await UpdateStatusAsync();
 
-            ParseReturn(ret);
+            Debug.WriteLine($"SetColorTemperatureAsync Old Values: {ToString()}");
+
+            if (temp < MinimumTemperature || temp > MaximumTemperature)
+            {
+                throw new ElgatoLightOutOfRangeException($"Temperature Out of Range. {temp} is an invlaid temperature");
+            }
+
+            var targetStatusStatus = LightsStatus.FromLight(this);
+
+            targetStatusStatus.Lights[0].Temperature = temp;
+
+            var targetStatusJson = targetStatusStatus.ToJson();
+
+            var retreturnedJsonStatus = await UpdateDevice(targetStatusJson);
+
+            if (string.IsNullOrWhiteSpace(retreturnedJsonStatus))
+            {
+                Debug.WriteLine($"The network is either offline or the device returned null data.");
+                return;
+            }
+
+            await ParseLightStatus(retreturnedJsonStatus);
+
+            Debug.WriteLine($"SetColorTemperatureAsync New Values: {ToString()}");
         }
 
         public async Task IncreaseColorTemperatureAsync(int amount)
         {
-            Debug.WriteLine($"IncreaseColorTemperatureAsync Old Values: {ToInfo()}");
-
             await SetColorTemperatureAsync(Temperature + amount);
-
-            Debug.WriteLine($"IncreaseColorTemperatureAsync New Values: {ToInfo()}");
         }
 
         public async Task DecreaseColorTemperatureAsync(int amount)
         {
-            await OnAsync(); // used to ensure the latest values are set
-
-            Debug.WriteLine($"DecreaseColorTemperatureAsync Old Values: {ToInfo()}");
-
             await SetColorTemperatureAsync(Temperature - amount);
-
-            Debug.WriteLine($"DecreaseColorTemperatureAsync New Values: {ToInfo()}");
         }
 
         public override string ToString()
         {
-            return string.Format(@"Elgato Light {0} @ {1}:{2}", SerialNumber, Address, Port);
+            return $@"Elgato Light {SerialNumber} @ {Address}:{Port}\nOn: \t\t{IsOn}\nBrightness:\t{Brightness}\nTemperature:\t{ Temperature }";
         }
 
-        public string ToInfo()
+        internal async Task UpdateStatusAsync()
         {
-            return $"On: \t\t{On}\nBrightness:\t{Brightness}\nTemperature:\t{ Temperature }";
-        }
+            var statusEndPoint = string.Format(StatusInfoEndPointTemplate, Address, Port);
 
-        internal async Task<string> HttpPut(string data)
-        {
-            return await HttpPut(EndPoint, data);
-        }
-
-        private void ParseReturn(string ret)
-        {
-            var document = JsonDocument.Parse(ret);
-
-            foreach (var element in document.RootElement.EnumerateObject())
+            if (NetworkDiscoveryHelper.IsNetworkAvailable() == false)
             {
-                if (element.Name == "lights")
+                return;
+            }
+
+            using (var client = new HttpClient())
+            {
+                var streamTask = client.GetStreamAsync(statusEndPoint);
+
+                LightsStatus status = await JsonSerializer.DeserializeAsync<LightsStatus>(await streamTask);
+
+                if (status != null && status.Lights != null && status.Lights.Count > 0)
                 {
-                    var value = element.Value;
+                    On = status.Lights[0].On;
+                    Brightness = status.Lights[0].Brightness;
+                    Temperature = status.Lights[0].Temperature;
+                }
 
-                    if (value.ValueKind == JsonValueKind.Array)
-                    {
-                        var doc2 = JsonDocument.Parse(value.GetRawText());
+            }
+        }
 
-                        foreach (JsonElement el1 in doc2.RootElement.EnumerateArray())
-                        {
-                            int onValue = el1.GetProperty("on").GetInt32();
-                            On = onValue == 1;
-                            Brightness = el1.GetProperty("brightness").GetInt32();
-                            Temperature = el1.GetProperty("temperature").GetInt32();
-                        }
-                    }
+        internal async Task UpdateSettings()
+        {
+            var settingEndPoint = string.Format(SettingsEndPointTemplate, Address, Port);
+
+            using (var client = new HttpClient())
+            {
+                var streamTask = client.GetStreamAsync(settingEndPoint);
+
+                var settings = await JsonSerializer.DeserializeAsync<ElgatoLightSettings>(await streamTask);
+
+                Settings = settings;
+            }
+        }
+
+        internal async Task ParseLightStatus(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                throw new ArgumentException($"'{nameof(json)}' cannot be null or whitespace", nameof(json));
+            }
+
+            byte[] byteArray = Encoding.UTF8.GetBytes(json);
+
+            using (MemoryStream stream = new MemoryStream(byteArray))
+            {
+                var status = await JsonSerializer.DeserializeAsync<LightsStatus>(stream);
+
+                if (status != null && status.Lights != null && status.Lights.Count > 0)
+                {
+                    On = status.Lights[0].On;
+                    Brightness = status.Lights[0].Brightness;
+                    Temperature = status.Lights[0].Temperature;
                 }
             }
         }
 
-        internal async Task<string> HttpPut(string endPoint, string data)
+        private async Task<string> UpdateDevice(string lightStatusJson)
         {
+            if (string.IsNullOrWhiteSpace(lightStatusJson))
+            {
+                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace", nameof(lightStatusJson));
+            }
+
+            return await UpdateDevice(EndPoint, lightStatusJson);
+        }
+
+        private async Task<string> UpdateDevice(string endPoint, string lightStatusJson)
+        {
+            if (string.IsNullOrWhiteSpace(endPoint))
+            {
+                throw new ArgumentException($"'{nameof(endPoint)}' cannot be null or whitespace", nameof(endPoint));
+            }
+
+            if (string.IsNullOrWhiteSpace(lightStatusJson))
+            {
+                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace", nameof(lightStatusJson));
+            }
+
+            if (NetworkDiscoveryHelper.IsNetworkAvailable() == false)
+            {
+                return string.Empty;
+            }
+
             using (var client = new HttpClient())
             {
-                using (var content = new StringContent(data, Encoding.UTF8))
+                using (var content = new StringContent(lightStatusJson, Encoding.UTF8))
                 {
                     content.Headers.Remove("Content-Type");
                     content.Headers.Add("Content-Type", "application/json");

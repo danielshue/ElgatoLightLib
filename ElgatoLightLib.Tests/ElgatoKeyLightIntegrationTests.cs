@@ -2,7 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace eelightlib.Tests
+namespace ElgatoLightLib.Tests
 {
     /// <exclude />
     [TestClass]
@@ -35,10 +35,20 @@ namespace eelightlib.Tests
 
         /// <exclude />
         [TestMethod]
-        public void DiscoveryTest()
+        public void DiscoveryAndSettingsTest()
         {
             Assert.IsTrue(Light.Port > 0, "Port wasn't parsed.");
-            Assert.IsNotNull(Light.ToInfo());
+
+            Assert.IsNotNull(Light.ToString());
+
+            Assert.IsNotNull(Light.Settings, "Failed to populate the Light Settings");
+            Assert.IsTrue(Light.Settings.ColorChangeDurationMs > 0, "Failed to Read the ColorChangeDurationMs.");
+            Assert.IsTrue(Light.Settings.PowerOnBehavior > 0, "Failed to Read the PowerOnBehavior.");
+            Assert.IsTrue(Light.Settings.PowerOnBrightness > 0, "Failed to Read the PowerOnBrightness.");
+            Assert.IsTrue(Light.Settings.PowerOnTemperature > 0, "Failed to Read the PowerOnTemperature.");
+            Assert.IsTrue(Light.Settings.SwitchOffDurationMs > 0, "Failed to Read the SwitchOffDurationMs.");
+            Assert.IsTrue(Light.Settings.SwitchOnDurationMs > 0, "Failed to Read the SwitchOnDurationMs.");
+
         }
 
         /// <exclude />
@@ -49,7 +59,7 @@ namespace eelightlib.Tests
             {
                 await Light.OnAsync();
 
-                Assert.IsTrue(Light.On, $"Failed to turn on light.");
+                Assert.IsTrue(Light.IsOn, $"Failed to turn on light.");
 
             }).GetAwaiter().GetResult();
         }
@@ -61,7 +71,7 @@ namespace eelightlib.Tests
             {
                 await Light.OffAsync();
 
-                Assert.IsTrue(Light.On == false, $"Failed to turn off light.");
+                Assert.IsTrue(Light.IsOn == false, $"Failed to turn off light.");
 
             }).GetAwaiter().GetResult();
         }
@@ -71,12 +81,12 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetBrightnessAsync(40);
+                await Light.SetBrightnessAsync(ElgatoLight.HalfBrightness);
 
                 int initialBrightnessValue = Light.Brightness;
 
@@ -96,10 +106,12 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
+
+                await Light.SetBrightnessAsync(ElgatoLight.HalfBrightness);
 
                 int initialBrightnessValue = Light.Brightness;
 
@@ -117,31 +129,32 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetBrightnessAsync(100);
+                await Light.SetBrightnessAsync(ElgatoLight.MaximumBrightness);
 
-                Assert.IsTrue(Light.Brightness == 100);
+                Assert.IsTrue(Light.Brightness == ElgatoLight.MaximumBrightness);
 
             }).GetAwaiter().GetResult();
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ElgatoLightOutOfRangeException))]
         public void SetZeroBrightnessAsync()
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetBrightnessAsync(0);
+                await Light.SetBrightnessAsync(ElgatoLight.MinimumBrightness - 1);
 
-                Assert.IsTrue(Light.Brightness == 0, $"Failed to set the brightness to 0%. Current brightness is set to {Light.Brightness}.");
+                Assert.IsTrue(Light.Brightness == 0, $"Failed, Minimum brightness is {ElgatoLight.MinimumBrightness} Current brightness is set to {Light.Brightness}.");
 
             }).GetAwaiter().GetResult();
         }
@@ -151,14 +164,14 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetBrightnessAsync(50);
+                await Light.SetBrightnessAsync(ElgatoLight.HalfBrightness);
 
-                Assert.IsTrue(Light.Brightness == 50, $"Failed to set the brightness to 50%. Current brightness is set to {Light.Brightness}.");
+                Assert.IsTrue(Light.Brightness == ElgatoLight.HalfBrightness, $"Failed to set the brightness to {ElgatoLight.HalfBrightness}%. Current brightness is set to {Light.Brightness}.");
 
             }).GetAwaiter().GetResult();
         }
@@ -168,9 +181,14 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                await Light.SetColorTemperatureAsync(4000);
+                if (Light.IsOn == false)
+                {
+                    await Light.OnAsync();
+                }
 
-                Assert.IsTrue(Light.Temperature == 4000);
+                await Light.SetColorTemperatureAsync(ElgatoLight.DefaultTemperature);
+
+                Assert.IsTrue(Light.Temperature == ElgatoLight.DefaultTemperature);
 
             }).GetAwaiter().GetResult();
         }
@@ -180,18 +198,18 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetColorTemperatureAsync(2900);
+                await Light.SetColorTemperatureAsync(ElgatoLight.DefaultTemperature);
 
                 int initialTemperatureValue = Light.Temperature;
 
-                int newTemperatureValue = initialTemperatureValue + 1000;
+                int newTemperatureValue = initialTemperatureValue + 100;
 
-                await Light.IncreaseColorTemperatureAsync(1000);
+                await Light.IncreaseColorTemperatureAsync(100);
 
                 Assert.IsTrue(Light.Temperature == newTemperatureValue, $"Failed to increase the temperature of the light. The initial value was {initialTemperatureValue} the new value is {Light.Temperature}.");
 
@@ -203,23 +221,38 @@ namespace eelightlib.Tests
         {
             Task.Run(async () =>
             {
-                if (Light.On == false)
+                if (Light.IsOn == false)
                 {
                     await Light.OnAsync();
                 }
 
-                await Light.SetColorTemperatureAsync(2900);
+                await Light.SetColorTemperatureAsync(ElgatoLight.DefaultTemperature);
 
                 int initialColorTemperatureValue = Light.Temperature;
 
-                int newColorTemperatureValue = initialColorTemperatureValue + 1000;
+                int newColorTemperatureValue = initialColorTemperatureValue - 1;
 
-                await Light.DecreaseColorTemperatureAsync(1000);
+                await Light.DecreaseColorTemperatureAsync(1);
 
                 Assert.IsTrue(Light.Temperature == newColorTemperatureValue, $"Failed to decrease the temperature of the light. The initial value was {initialColorTemperatureValue} the new value is {Light.Temperature}.");
 
+            }).GetAwaiter().GetResult();
+        }
+
+        [TestMethod]
+        public void TypeFoundTest()
+        {
+            Task.Run(async () =>
+            {
+                if (Light.IsOn == false)
+                {
+                    await Light.OnAsync();
+                }
+
+                Assert.IsTrue(Light.LightType == ElgatoLightType.KeyLight, "Failed to get the proper light type.");
 
             }).GetAwaiter().GetResult();
         }
+
     }
 }
