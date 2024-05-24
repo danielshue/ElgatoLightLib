@@ -10,22 +10,31 @@ using Zeroconf;
 namespace ElgatoLightLib
 {
     /// <summary>
-    /// Implements the <see cref="IElgatoLightMgr"/> interface.
+    /// The class ElgatoLightMgr is defined and it implements the <see cref="IElgatoLightMgr"/> interface.
     /// </summary>
     public class ElgatoLightMgr : IElgatoLightMgr
     {
-        public static TimeSpan BonjourDiscoveryInterval = TimeSpan.FromSeconds(3.0);
-
-        public static int DefaultPort = 9123;
+        /// <summary>
+        /// Bonjour Discovery Interval in used in Bonjour.
+        /// </summary>
+        /// <remarks>
+        /// Default time is 3 seconds.
+        /// </remarks>
+        internal static TimeSpan BonjourDiscoveryInterval = TimeSpan.FromSeconds(3.0);
 
         /// <summary>
-        /// Discover Service for the Elgoto Key Light
+        /// Default Port used for Communication.
+        /// </summary>
+        internal static int DefaultPort = 9123;
+
+        /// <summary>
+        /// Discover Service for the Elgato Key Light.
         /// </summary>
         private const string BonjourDiscoveryElgatoKeyLightService = "_elg._tcp.local.";
         //private const string ElgatoEveKeyLightService = "_hap._tcp.local.";
 
         /// <summary>
-        /// Template used for the Elgoto Keylight Endpoint 
+        /// Template used for the Elgato Keylight Endpoint.
         /// </summary>
         private const string AccessoryInfoEndPointTemplate = @"http://{0}:{1}/elgato/accessory-info";
         
@@ -40,20 +49,11 @@ namespace ElgatoLightLib
             }
 
             // discover the set of available lights
-            ResolveOptions elgatoKeyOptions = new ResolveOptions(BonjourDiscoveryElgatoKeyLightService)
+            ResolveOptions elgatoKeyOptions = new(BonjourDiscoveryElgatoKeyLightService)
             {
-                //ScanTime = TimeSpan.FromSeconds(timeout)
             };
-
-            /*
-            ResolveOptions eveKeyOptions = new ResolveOptions(ElgatoEveKeyLightService)
-            {
-                //ScanTime = TimeSpan.FromSeconds(timeout)
-            };
-            */
 
             IReadOnlyList<IZeroconfHost> elgatoDiscoveredServices = await ZeroconfResolver.ResolveAsync(elgatoKeyOptions, callback: null, cancellationToken);
-           // IReadOnlyList<IZeroconfHost> eveDiscoveredServices = await ZeroconfResolver.ResolveAsync(eveKeyOptions, callback: null, cancellationToken);
 
             if (elgatoDiscoveredServices != null)
             {
@@ -89,23 +89,32 @@ namespace ElgatoLightLib
 */            return lights;
         }
 
+        /// <summary>
+        /// The RetrieveKeyLightInfoAsync method is a private asynchronous method that retrieves information about an Elgato Key Light device.
+        /// </summary>
+        /// <param name="ipaddress">The IP address of the device.</param>
+        /// <param name="name">The display name of the device.</param>
+        /// <param name="port">the port number used for communication with the device.</param>
+        /// <returns></returns>
         private async Task<ElgatoLight> RetrieveKeyLightInfoAsync(string ipaddress, string name, int port)
         {
             var endPoint = string.Format(AccessoryInfoEndPointTemplate, ipaddress, port);
 
-            using (var client = new HttpClient())
+            using var client = new HttpClient();
+            var streamTask = client.GetStreamAsync(endPoint);
+
+            var keylight = await JsonSerializer.DeserializeAsync<ElgatoLight>(await streamTask);
+
+            // Check if keylight is not null before accessing its properties
+            if (keylight != null)
             {
-                var streamTask = client.GetStreamAsync(endPoint);
-
-                var keylight = await JsonSerializer.DeserializeAsync<ElgatoLight>(await streamTask);
-
                 // populate the keylight with details not included in the serialization
                 keylight.Address = ipaddress;
                 keylight.Name = name;
                 keylight.Port = port;
-
-                return keylight;
             }
+
+            return keylight;
         }
     }
 }

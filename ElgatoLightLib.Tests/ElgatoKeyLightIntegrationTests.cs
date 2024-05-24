@@ -8,7 +8,7 @@ namespace ElgatoLightLib.Tests
     [TestClass]
     public class ElgatoKeyLightIntegrationTests
     {
-        private readonly ElgatoLightMgr elgatoKeyLightMgr = new ElgatoLightMgr();
+        private readonly ElgatoLightMgr elgatoKeyLightMgr = new();
         private IList<ElgatoLight> _lights;
 
         [TestInitialize]
@@ -240,7 +240,7 @@ namespace ElgatoLightLib.Tests
         }
 
         [TestMethod]
-        public void TypeFoundTest()
+        public void KeyLightTypeFoundTest()
         {
             Task.Run(async () =>
             {

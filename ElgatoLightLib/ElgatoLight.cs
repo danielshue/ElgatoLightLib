@@ -11,83 +11,181 @@ using System.Threading.Tasks;
 namespace ElgatoLightLib
 {
     /// <summary>
-    /// Class Library for the Elgato Light
+    /// Class Library for the Elgato Light.
     /// </summary>
     public class ElgatoLight
     {
+        /// <summary>
+        /// Endpoint template used for getting the status of the Elgato Light.
+        /// </summary>
         private const string StatusInfoEndPointTemplate = @"http://{0}:{1}/elgato/lights";
+
+        /// <summary>
+        /// Endpoint template used for getting the settings of the Elgato Light.
+        /// </summary>
         private const string SettingsEndPointTemplate = @"http://{0}:{1}/elgato/lights/settings";
 
+        /// <summary>
+        /// Minimum Temperature value for the Elgato Light.
+        /// </summary>
         public const int MinimumTemperature = 143;
+
+        /// <summary>
+        /// Maximum Temperature value for the Elgato Light.
+        /// </summary>
         public const int MaximumTemperature = 344;
+
+        /// <summary>
+        /// Default Temperature value for the Elgato Light.
+        /// </summary>
         public const int DefaultTemperature = 213;
 
+        /// <summary>
+        /// Minimum Kelvin value for the Elgato Light.
+        /// </summary>
         public const int MinKelvin = 2900;
+
+        /// <Maximum >
+        /// Default Kelvin value for the Elgato Light.
+        /// </summary>
         public const int MaxKelvin = 7000;
+
+        /// <summary>
+        /// Default values for the Elgato Light
+        /// </summary>
         public const int WhiteRangeKelvin = 4100;
 
+        /// <summary>
+        /// Minimum Brightness value for the Elgato Light.
+        /// </summary>
         public const int MinimumBrightness = 3;
+
+        /// <summary>
+        /// Maximum Brightness value for the Elgato Light.
         public const int MaximumBrightness = 100;
+
+        /// <summary>
+        /// Half Brightness value for the Elgato Light.
         public const int HalfBrightness = 50;
 
+        /// <summary>
+        /// Default to turn the device On for the Elgato Light.
+        /// </summary>
         public const bool DefaultOn = true;
+
+        /// <summary>
+        /// Default Hue Value for the Elgato Light.
+        /// </summary>
         public const double DefaultHue = 31.0;
+
+        /// <summary>
+        /// Default Saturation Value for the Elgato Light.
+        /// </summary>
         public const double DefaultSaturation = 33.0;
+
+        /// <summary>
+        /// Default Brightness Value for the Elgato Light.
+        /// </summary>
         public const int DefaultBrightness = 20;
+
+        /// <summary>
+        /// Default Duration Switch On in Milliseconds Value for the Elgato Light.
+        /// </summary>
         public const int DefaultDurationSwitchOnMs = 100;
+
+        /// <summary>
+        /// Default Duration Switch Off in Milliseconds Value for the Elgato Light.
+        /// </summary>
         public const int DefaultDurationSwitchOffMs = 300;
+
+        /// <summary>
+        /// Default Duration Color Change in Milliseconds Value for the Elgato Light.
+        /// </summary>
         public const int DefaultsDurationColorChangeMs = 100;
+
+        /// <summary>
+        /// Default Duration Power Watts in Hrz Value for the Elgato Light.
+        /// </summary>
         public const int DefaultDefaultPWMHz = 300;
 
-        /// <exclude />
+        /// <summary>
+        /// Product Name
+        /// </summary>
         [JsonPropertyName("productName")]
         public string ProductName { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Hardware Board Type
+        /// </summary>
         [JsonPropertyName("hardwareBoardType")]
         public int HardwareBoardType { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Firmware Build Number
+        /// </summary>
         [JsonPropertyName("firmwareBuildNumber")]
         public int FirmwareBuildNumber { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Firmware Version
+        /// </summary>
         [JsonPropertyName("firmwareVersion")]
         public string FirmwareVersion { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Serial Number
+        /// </summary>
         [JsonPropertyName("serialNumber")]
         public string SerialNumber { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Display Name
+        /// </summary>
         [JsonPropertyName("displayName")]
         public string DisplayName { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Features
+        /// </summary>
         [JsonPropertyName("features")]
         public string[] Features { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Address
+        /// </summary>
         public string Address { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Port
+        /// </summary>
         public int Port { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Name
+        /// </summary>
         public string Name { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// Indicates if the light is on.
+        /// </summary>
         [JsonPropertyName("on")]
         public int On { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// brightness
+        /// </summary>
         [JsonPropertyName("brightness")]
         public int Brightness { get; set; }
 
-        /// <exclude />
+        /// <summary>
+        /// temperature
+        /// </summary>
         [JsonPropertyName("temperature")]
         public int Temperature { get; set; }
 
+        /// <summary>
+        /// Settings
+        /// </summary>
         public ElgatoLightSettings Settings { get; set; }
 
         /// <summary>
@@ -102,7 +200,9 @@ namespace ElgatoLightLib
             }
         }
 
-        /// <exclude />
+        /// <summary>
+        /// EndPoint
+        /// </summary>
         public string EndPoint
         {
             get
@@ -111,6 +211,9 @@ namespace ElgatoLightLib
             }
         }
 
+        /// <summary>
+        /// IsOn
+        /// </summary>
         public bool IsOn
         {
             get
@@ -123,6 +226,9 @@ namespace ElgatoLightLib
             }
         }
 
+        /// <summary>
+        /// Async turns on the light.
+        /// </summary>
         public async Task OnAsync()
         {
             await UpdateStatusAsync();
@@ -150,6 +256,9 @@ namespace ElgatoLightLib
             Debug.WriteLine($"OnAsync New Values: {ToString()}");
         }
 
+        /// <summary>
+        /// Async turns off the light.
+        /// </summary>
         public async Task OffAsync()
         {
             await UpdateStatusAsync();
@@ -180,11 +289,17 @@ namespace ElgatoLightLib
         }
 
 
+        /// <summary>
+        /// Increases Brightness Async
+        /// </summary>
         public async Task IncreaseBrightnessAsync(int amount)
         {
             await SetBrightnessAsync(Brightness + amount);
         }
 
+        /// <summary>
+        /// Decreases Brightness Async
+        /// </summary>
         public async Task DecreaseBrightnessAsync(int amount)
         {
             await SetBrightnessAsync(Brightness - amount);
@@ -218,31 +333,31 @@ namespace ElgatoLightLib
 
             var targetStatusJson = targetStatus.ToJson();
 
-            var retreturnedJsonStatus = await UpdateDevice(targetStatusJson);
+            var receivedStatus = await UpdateDevice(targetStatusJson);
 
-            if (string.IsNullOrWhiteSpace(retreturnedJsonStatus))
+            if (string.IsNullOrWhiteSpace(receivedStatus))
             {
                 Debug.WriteLine($"The network is either offline or the device returned null data.");
                 return;
             }
 
-            await ParseLightStatus(retreturnedJsonStatus);
+            await ParseLightStatus(receivedStatus);
 
             Debug.WriteLine($"SetBrightnessAsync New Values: {ToString()}");
         }
 
         /// <summary>
-        ///  Must be 2900-7000
+        ///  Sets the color Temperture Must be 2900-7000.
         /// </summary>
         /// <param name="temp"></param>
         /// <returns></returns>
         /// <exception cref="ElgatoLightNotOnException">Thrown if trying to set the brightness and the device isn't turned on.</exception>
-        /// <exception cref="ElgatoLightOutOfRangeException">Thrown if the new value is out of range. The minimum range is <see cref="MinimumTemperature"/> and maximum tempature is <see cref="MaximumTemperature"/>.</exception>
+        /// <exception cref="ElgatoLightOutOfRangeException">Thrown if the new value is out of range. The minimum range is <see cref="MinimumTemperature"/> and maximum temperature is <see cref="MaximumTemperature"/>.</exception>
         public async Task SetColorTemperatureAsync(int temp)
         {
             if (IsOn == false)
             {
-                throw new ElgatoLightNotOnException("The light must be turned On in order to turn the set the tempature.");
+                throw new ElgatoLightNotOnException("The light must be turned On in order to turn the set the temperature.");
             }
 
             await UpdateStatusAsync();
@@ -251,7 +366,7 @@ namespace ElgatoLightLib
 
             if (temp < MinimumTemperature || temp > MaximumTemperature)
             {
-                throw new ElgatoLightOutOfRangeException($"Temperature Out of Range. {temp} is an invlaid temperature");
+                throw new ElgatoLightOutOfRangeException($"Temperature Out of Range. {temp} is an invalid temperature.");
             }
 
             var targetStatusStatus = LightsStatus.FromLight(this);
@@ -260,24 +375,30 @@ namespace ElgatoLightLib
 
             var targetStatusJson = targetStatusStatus.ToJson();
 
-            var retreturnedJsonStatus = await UpdateDevice(targetStatusJson);
+            var receivedStatus = await UpdateDevice(targetStatusJson);
 
-            if (string.IsNullOrWhiteSpace(retreturnedJsonStatus))
+            if (string.IsNullOrWhiteSpace(receivedStatus))
             {
                 Debug.WriteLine($"The network is either offline or the device returned null data.");
                 return;
             }
 
-            await ParseLightStatus(retreturnedJsonStatus);
+            await ParseLightStatus(receivedStatus);
 
             Debug.WriteLine($"SetColorTemperatureAsync New Values: {ToString()}");
         }
 
+        /// <summary>
+        /// Increase Color Temperature Async
+        /// </summary>
         public async Task IncreaseColorTemperatureAsync(int amount)
         {
             await SetColorTemperatureAsync(Temperature + amount);
         }
 
+        /// <summary>
+        /// Decrease Color Temperature Async
+        /// </summary>
         public async Task DecreaseColorTemperatureAsync(int amount)
         {
             await SetColorTemperatureAsync(Temperature - amount);
@@ -288,6 +409,9 @@ namespace ElgatoLightLib
             return $@"Elgato Light {SerialNumber} @ {Address}:{Port}\nOn: \t\t{IsOn}\nBrightness:\t{Brightness}\nTemperature:\t{ Temperature }";
         }
 
+        /// <summary>
+        /// Update the light Status Async.
+        /// </summary>
         internal async Task UpdateStatusAsync()
         {
             var statusEndPoint = string.Format(StatusInfoEndPointTemplate, Address, Port);
@@ -297,36 +421,37 @@ namespace ElgatoLightLib
                 return;
             }
 
-            using (var client = new HttpClient())
+            using var client = new HttpClient();
+            var streamTask = client.GetStreamAsync(statusEndPoint);
+
+            LightsStatus status = await JsonSerializer.DeserializeAsync<LightsStatus>(await streamTask);
+
+            if (status != null && status.Lights != null && status.Lights.Count > 0)
             {
-                var streamTask = client.GetStreamAsync(statusEndPoint);
-
-                LightsStatus status = await JsonSerializer.DeserializeAsync<LightsStatus>(await streamTask);
-
-                if (status != null && status.Lights != null && status.Lights.Count > 0)
-                {
-                    On = status.Lights[0].On;
-                    Brightness = status.Lights[0].Brightness;
-                    Temperature = status.Lights[0].Temperature;
-                }
-
+                On = status.Lights[0].On;
+                Brightness = status.Lights[0].Brightness;
+                Temperature = status.Lights[0].Temperature;
             }
         }
 
+        /// <summary>
+        /// Update Settings Async
+        /// </summary>
         internal async Task UpdateSettings()
         {
             var settingEndPoint = string.Format(SettingsEndPointTemplate, Address, Port);
 
-            using (var client = new HttpClient())
-            {
-                var streamTask = client.GetStreamAsync(settingEndPoint);
+            using var client = new HttpClient();
+            var streamTask = client.GetStreamAsync(settingEndPoint);
 
-                var settings = await JsonSerializer.DeserializeAsync<ElgatoLightSettings>(await streamTask);
+            var settings = await JsonSerializer.DeserializeAsync<ElgatoLightSettings>(await streamTask);
 
-                Settings = settings;
-            }
+            Settings = settings;
         }
 
+        /// <summary>
+        /// Parse Light Status Async
+        /// </summary>
         internal async Task ParseLightStatus(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -336,39 +461,43 @@ namespace ElgatoLightLib
 
             byte[] byteArray = Encoding.UTF8.GetBytes(json);
 
-            using (MemoryStream stream = new MemoryStream(byteArray))
-            {
-                var status = await JsonSerializer.DeserializeAsync<LightsStatus>(stream);
+            using MemoryStream stream = new(byteArray);
+            var status = await JsonSerializer.DeserializeAsync<LightsStatus>(stream);
 
-                if (status != null && status.Lights != null && status.Lights.Count > 0)
-                {
-                    On = status.Lights[0].On;
-                    Brightness = status.Lights[0].Brightness;
-                    Temperature = status.Lights[0].Temperature;
-                }
+            if (status != null && status.Lights != null && status.Lights.Count > 0)
+            {
+                On = status.Lights[0].On;
+                Brightness = status.Lights[0].Brightness;
+                Temperature = status.Lights[0].Temperature;
             }
         }
 
+        /// <summary>
+        /// Updates the Device Async
+        /// </summary>
         private async Task<string> UpdateDevice(string lightStatusJson)
         {
             if (string.IsNullOrWhiteSpace(lightStatusJson))
             {
-                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace", nameof(lightStatusJson));
+                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace.", nameof(lightStatusJson));
             }
 
             return await UpdateDevice(EndPoint, lightStatusJson);
         }
 
+        /// <summary>
+        /// Update the Device Async
+        /// </summary>
         private async Task<string> UpdateDevice(string endPoint, string lightStatusJson)
         {
             if (string.IsNullOrWhiteSpace(endPoint))
             {
-                throw new ArgumentException($"'{nameof(endPoint)}' cannot be null or whitespace", nameof(endPoint));
+                throw new ArgumentException($"'{nameof(endPoint)}' cannot be null or whitespace.", nameof(endPoint));
             }
 
             if (string.IsNullOrWhiteSpace(lightStatusJson))
             {
-                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace", nameof(lightStatusJson));
+                throw new ArgumentException($"'{nameof(lightStatusJson)}' cannot be null or whitespace.", nameof(lightStatusJson));
             }
 
             if (NetworkDiscoveryHelper.IsNetworkAvailable() == false)
@@ -376,29 +505,21 @@ namespace ElgatoLightLib
                 return string.Empty;
             }
 
-            using (var client = new HttpClient())
-            {
-                using (var content = new StringContent(lightStatusJson, Encoding.UTF8))
-                {
-                    content.Headers.Remove("Content-Type");
-                    content.Headers.Add("Content-Type", "application/json");
+            using var client = new HttpClient();
+            using var content = new StringContent(lightStatusJson, Encoding.UTF8);
+            content.Headers.Remove("Content-Type");
+            content.Headers.Add("Content-Type", "application/json");
 
-                    using (var req = new HttpRequestMessage(HttpMethod.Put, endPoint))
-                    {
-                        req.Content = content;
+            using var req = new HttpRequestMessage(HttpMethod.Put, endPoint);
+            req.Content = content;
 
-                        // Ignore Certificate validation failures (aka untrusted certificate + certificate chains)
-                        ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+            // Ignore Certificate validation failures (aka untrusted certificate + certificate chains)
+            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 
-                        using (HttpResponseMessage resp = await client.SendAsync(req))
-                        {
-                            resp.EnsureSuccessStatusCode();
+            using HttpResponseMessage resp = await client.SendAsync(req);
+            resp.EnsureSuccessStatusCode();
 
-                            return await resp.Content.ReadAsStringAsync();
-                        }
-                    }
-                }
-            }
+            return await resp.Content.ReadAsStringAsync();
         }
     }
 }
