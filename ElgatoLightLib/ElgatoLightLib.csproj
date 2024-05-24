@@ -20,6 +20,11 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\LICENSE" Link="LICENSE" />
+    <None Include="..\README.md" Link="README.md" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
